@@ -23,7 +23,6 @@ import Media from './Media.astro';
 						<span class:list={['tw__line', `tw__line--${line.size}`]} style={`--i:${i}`} aria-hidden="true">
 							<span class="tw__text">{line.text}</span>
 							<span class="tw__block" />
-							<span class="tw__caret"><i class="tw__caret-bar" /></span>
 						</span>
 					))
 				}
@@ -266,7 +265,7 @@ import Media from './Media.astro';
 		animation-delay: calc(var(--i) * 780ms + 400ms);
 	}
 
-	/* Grows from the caret to full width, then peels off to the right,
+	/* Grows from the line start to full width, then peels off to the right,
 	   uncovering the text underneath — the Figma variant sequence. */
 	.tw__block {
 		position: absolute;
@@ -276,34 +275,6 @@ import Media from './Media.astro';
 		transform-origin: left center;
 		animation: tw-block 900ms var(--ease-in-out) forwards;
 		animation-delay: calc(var(--i) * 780ms + 400ms);
-	}
-
-	/* Two elements so the two jobs never fight over `opacity`: the wrapper
-	   controls when the caret exists, the bar inside does the blinking. */
-	.tw__caret {
-		position: absolute;
-		right: -12px;
-		top: 12%;
-		bottom: 14%;
-		width: 4px;
-		opacity: 0;
-		/* Intermediate lines: caret appears, then leaves as the line finishes. */
-		animation: tw-caret-life 1180ms linear forwards;
-		animation-delay: calc(var(--i) * 780ms + 260ms);
-	}
-
-	/* The final caret arrives and stays. */
-	.tw__line:last-child .tw__caret {
-		animation: tw-caret-in 1ms linear forwards;
-		animation-delay: calc(var(--i) * 780ms + 260ms);
-	}
-
-	.tw__caret-bar {
-		display: block;
-		width: 100%;
-		height: 100%;
-		background: var(--c-accent);
-		animation: tw-blink 900ms steps(2, start) infinite;
 	}
 
 	/* Held fully clipped while the block sweeps out, then unclipped in step
@@ -334,34 +305,6 @@ import Media from './Media.astro';
 		100% {
 			transform: scaleX(0);
 			transform-origin: right center;
-		}
-	}
-
-	@keyframes tw-caret-in {
-		to {
-			opacity: 1;
-		}
-	}
-
-	@keyframes tw-caret-life {
-		0% {
-			opacity: 1;
-		}
-		92% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-		}
-	}
-
-	@keyframes tw-blink {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.15;
 		}
 	}
 
@@ -691,7 +634,6 @@ import Media from './Media.astro';
 		}
 
 		.tw__block,
-		.tw__caret,
 		.hero__scroll-dot {
 			display: none;
 		}
