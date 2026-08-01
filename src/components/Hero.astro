@@ -8,9 +8,9 @@ import Media from './Media.astro';
 	{/* --- Cursor-tracked grain -------------------------------------------- */}
 	<div class="hero__grain" aria-hidden="true">
 		<span class="hero__grain-base"></span>
-		<span class="hero__grain-reveal" data-hero-reveal></span>
-		<span class="hero__grain-flow" data-hero-reveal></span>
-		<span class="hero__grain-glow" data-hero-glow></span>
+		<span class="hero__grain-reveal"><i class="hero__grain-tile"></i></span>
+		<span class="hero__grain-flow"><i class="hero__grain-tile"></i></span>
+		<span class="hero__grain-glow"></span>
 	</div>
 
 	<div class="hero__inner container">
@@ -161,34 +161,52 @@ import Media from './Media.astro';
 			rgba(0, 0, 0, 0.07) 76%,
 			transparent 100%
 		);
-		will-change: mask-position;
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
 	}
 
-	/* Two tiles drifting on different vectors and periods. Each translation
-	   is exactly one tile, so the loop is seamless. */
+	/* Two tiles drifting on different vectors and periods. The masked wrapper
+	   stays put; the tile inside is one full tile larger in every direction
+	   and travels by exactly one tile, so the loop is seamless — and because
+	   the drift is a transform rather than a background-position, it runs on
+	   the compositor instead of repainting a full-viewport layer forever. */
 	.hero__grain-reveal {
-		background-image: var(--noise);
-		background-size: 200px 200px;
 		opacity: 0.32;
-		animation: grain-drift 34s linear infinite;
 	}
 
 	.hero__grain-flow {
+		opacity: 0.22;
+	}
+
+	.hero__grain-tile {
+		position: absolute;
+		display: block;
+		will-change: transform;
+	}
+
+	.hero__grain-reveal .hero__grain-tile {
+		inset: -200px;
+		background-image: var(--noise);
+		background-size: 200px 200px;
+		animation: grain-drift 34s linear infinite;
+	}
+
+	.hero__grain-flow .hero__grain-tile {
+		inset: -160px;
 		background-image: var(--noise-fine);
 		background-size: 160px 160px;
-		opacity: 0.22;
 		animation: grain-drift-alt 23s linear infinite;
 	}
 
 	@keyframes grain-drift {
 		to {
-			background-position: 200px -200px;
+			transform: translate3d(200px, -200px, 0);
 		}
 	}
 
 	@keyframes grain-drift-alt {
 		to {
-			background-position: -160px -160px;
+			transform: translate3d(-160px, -160px, 0);
 		}
 	}
 
@@ -647,8 +665,12 @@ import Media from './Media.astro';
 		.hero__grain-glow {
 			-webkit-mask-image: none;
 			mask-image: none;
-			animation: none;
 			opacity: 0.05;
+		}
+
+		.hero__grain-tile {
+			animation: none;
+			will-change: auto;
 		}
 	}
 </style>
@@ -662,71 +684,117 @@ import Media from './Media.astro';
 		/* Target = where the pointer is. Current = where the blob is drawn.
 		   Easing current toward target every frame makes the grain trail the
 		   cursor instead of snapping to it. */
-		const rect = () => hero.getBoundingClientRect();
-		let target = { x: rect().width * 0.5, y: rect().height * 0.45 };
+		let box = hero.getBoundingClientRect();
+		let target = { x: box.width * 0.5, y: box.height * 0.45 };
 		let current = { ...target };
 		let pointerSeen = false;
+		let visible = false;
 		let raf = 0;
-		let idleT = 0;
+
+		/* Every --mx/--my write invalidates a full-viewport gradient mask, so
+		   the values are rounded to whole pixels and only written when they
+		   actually change. The idle drift moves a fraction of a pixel per
+		   frame, so most of its frames now cost nothing at all. */
+		let lastX = NaN;
+		let lastY = NaN;
+		const lastPog = pogs.map(() => ({ x: NaN, y: NaN }));
+
+		/* Cached: reading the box inside the frame — after the style writes
+		   below — forces a synchronous layout on every single frame. */
+		const measure = () => {
+			box = hero.getBoundingClientRect();
+		};
 
 		/* Before the first pointer move (and on touch) the blob drifts on a
 		   slow lissajous path — the ambient loop from the Figma prototype. */
-		const idlePath = (t: number) => {
-			const r = rect();
-			return {
-				x: r.width * (0.5 + 0.26 * Math.sin(t * 0.00042)),
-				y: r.height * (0.46 + 0.2 * Math.sin(t * 0.00061 + 1.1)),
-			};
-		};
+		const idlePath = (t: number) => ({
+			x: box.width * (0.5 + 0.26 * Math.sin(t * 0.00042)),
+			y: box.height * (0.46 + 0.2 * Math.sin(t * 0.00061 + 1.1)),
+		});
 
 		const tick = (now: number) => {
-			if (!pointerSeen) {
-				idleT = now;
-				target = idlePath(idleT);
-			}
+			if (!pointerSeen) target = idlePath(now);
 
 			/* Low gain: the field lags well behind the pointer so it reads as
 			   drifting toward the cursor rather than stuck to it. */
-			current.x += (target.x - current.x) * 0.045;
-			current.y += (target.y - current.y) * 0.045;
+			const gapX = target.x - current.x;
+			const gapY = target.y - current.y;
+			current.x += gapX * 0.045;
+			current.y += gapY * 0.045;
 
-			hero.style.setProperty('--mx', `${current.x.toFixed(1)}px`);
-			hero.style.setProperty('--my', `${current.y.toFixed(1)}px`);
+			const mx = Math.round(current.x);
+			const my = Math.round(current.y);
+			if (mx !== lastX) {
+				hero.style.setProperty('--mx', `${mx}px`);
+				lastX = mx;
+			}
+			if (my !== lastY) {
+				hero.style.setProperty('--my', `${my}px`);
+				lastY = my;
+			}
 
 			/* Parallax the pogs against the same pointer, each at its own depth. */
-			const r = rect();
-			const dx = current.x - r.width / 2;
-			const dy = current.y - r.height / 2;
-			for (const pog of pogs) {
+			const dx = current.x - box.width / 2;
+			const dy = current.y - box.height / 2;
+			pogs.forEach((pog, i) => {
 				const depth = Number(pog.dataset.pogDepth ?? 0);
-				pog.style.setProperty('--px', `${(-dx * depth).toFixed(1)}px`);
-				pog.style.setProperty('--py', `${(-dy * depth).toFixed(1)}px`);
+				const px = Math.round(-dx * depth);
+				const py = Math.round(-dy * depth);
+				const last = lastPog[i];
+				if (px !== last.x) {
+					pog.style.setProperty('--px', `${px}px`);
+					last.x = px;
+				}
+				if (py !== last.y) {
+					pog.style.setProperty('--py', `${py}px`);
+					last.y = py;
+				}
+			});
+
+			/* Pointer stopped and the field has caught up — nothing left to
+			   animate, so park until it moves again. The idle path never
+			   converges, so it keeps running by design. */
+			if (pointerSeen && Math.abs(gapX) < 0.5 && Math.abs(gapY) < 0.5) {
+				raf = 0;
+				return;
 			}
 
 			raf = requestAnimationFrame(tick);
 		};
 
+		const start = () => {
+			if (!raf && visible) raf = requestAnimationFrame(tick);
+		};
+
 		const onPointerMove = (event: PointerEvent) => {
-			const r = rect();
 			pointerSeen = true;
-			target = { x: event.clientX - r.left, y: event.clientY - r.top };
+			target = { x: event.clientX - box.left, y: event.clientY - box.top };
 			/* Expand the reveal slightly while the pointer is inside. */
 			hero.style.setProperty('--r', '360px');
+			start();
 		};
 
 		const onPointerLeave = () => {
 			pointerSeen = false;
 			hero.style.setProperty('--r', '340px');
+			start();
 		};
 
 		hero.addEventListener('pointermove', onPointerMove, { passive: true });
 		hero.addEventListener('pointerleave', onPointerLeave, { passive: true });
 
+		/* box.top travels with the page, box.width/height with the viewport. */
+		window.addEventListener('scroll', measure, { passive: true });
+		window.addEventListener('resize', measure, { passive: true });
+
 		/* Pause the loop when the hero is off-screen. */
 		const io = new IntersectionObserver(
 			([entry]) => {
-				if (entry.isIntersecting && !raf) raf = requestAnimationFrame(tick);
-				else if (!entry.isIntersecting && raf) {
+				visible = entry.isIntersecting;
+				if (visible) {
+					measure();
+					start();
+				} else if (raf) {
 					cancelAnimationFrame(raf);
 					raf = 0;
 				}
