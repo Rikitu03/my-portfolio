@@ -28,8 +28,8 @@ export const hero = {
 	],
 	tagline: 'Bridging the gap between beautiful aesthetics and robust functionality.',
 	links: [
-		{ label: 'GitHub', href: 'https://github.com/', icon: 'github' as const },
-		{ label: 'LinkedIn', href: 'https://www.linkedin.com/', icon: 'linkedin' as const },
+		{ label: 'GitHub', href: 'https://github.com/Rikitu03/', icon: 'github' as const },
+		{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/jason-jay-recto/', icon: 'linkedin' as const },
 		{ label: 'Resume', href: '/resume.pdf', icon: 'resume' as const },
 	],
 	actions: [
@@ -40,7 +40,7 @@ export const hero = {
 
 export const about = {
 	heading: 'About Me',
-	body: "I'm an aspiring full-stack dev and software engineer building web apps that solves real problems. I excel on a lot of tasks, especially on designing to building landing pages and backend development. I'm open to any gigs that fits my skills.",
+	body: "I'm an aspiring full-stack dev and software engineer building web apps that solve real problems. I excel at a lot of tasks, especially designing and building landing pages, and backend development. I'm open to any gigs that fit my skills.",
 	/* Drop the photos into /public/images/about/ and they replace the
 	   placeholders on the next build. The carousel expands whichever shot is
 	   active and collapses the rest, so every image is cropped to fill — use
@@ -64,7 +64,7 @@ export interface SkillGroup {
 
 export const skills = {
 	heading: 'Skills & Technologies',
-	body: "I'm an aspiring full-stack dev and software engineer building web apps that solves real problems. I excel on a lot of tasks, especially on designing to building landing pages and backend development. I'm open to any gigs that fits my skills.",
+	body: 'Most of this I picked up building real things — class projects, a full-scale thesis system, and personal builds. Laravel, PHP, and Python do the heavy lifting on the backend; Astro, Tailwind, and Blade cover the frontend; the computer-vision tools came out of the thesis. The list is still growing.',
 	groups: <SkillGroup[]>[
 		{
 			rail: 'Frontend',
@@ -209,8 +209,8 @@ export const education = {
 export const footer = {
 	wordmark: 'Recto',
 	links: [
-		{ label: 'GitHub', href: 'https://github.com/' },
-		{ label: 'LinkedIn', href: 'https://www.linkedin.com/' },
+		{ label: 'GitHub', href: 'https://github.com/Rikitu03/' },
+		{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/jason-jay-recto/' },
 		{ label: 'Resume', href: '/resume.pdf' },
 	],
 	legal: 'This website is created as my personal portfolio.',
