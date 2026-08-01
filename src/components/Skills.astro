@@ -1,0 +1,193 @@
+---
+import { skills } from '../data/content';
+
+const slug = (value: string) =>
+	value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
+---
+
+<section class="section section--dark skills" id="skills">
+	<div class="container split">
+		<div class="skills__rail">
+			<h2 class="h-display" data-reveal="left">{skills.heading}</h2>
+
+			<ul class="skills__nav" data-reveal-stagger>
+				{
+					skills.groups.map((group) => (
+						<li>
+							<a class="skills__nav-link" href={`#skill-${slug(group.rail)}`} data-skill-nav={slug(group.rail)}>
+								<span class="skills__nav-dot" />
+								<span>{group.rail}</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+
+		<div class="skills__content">
+			<p class="body skills__body" data-reveal>{skills.body}</p>
+
+			{
+				skills.groups.map((group) => (
+					<div class="skills__group" id={`skill-${slug(group.rail)}`} data-skill-group={slug(group.rail)}>
+						<h3 class="skills__group-title">{group.title}</h3>
+						<ul class="skills__pills" data-reveal-stagger>
+							{group.items.map((item) => (
+								<li class="pill">{item}</li>
+							))}
+						</ul>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.skills__rail {
+		position: sticky;
+		top: 120px;
+		display: flex;
+		flex-direction: column;
+		gap: 30px;
+	}
+
+	.skills__nav {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.skills__nav-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 1.125rem;
+		font-weight: 500;
+		letter-spacing: -0.01em;
+		color: rgba(242, 242, 247, 0.5);
+		transition:
+			color var(--dur) var(--ease-out),
+			transform var(--dur) var(--ease-out);
+	}
+
+	.skills__nav-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--c-accent);
+		opacity: 0;
+		transform: scale(0.4);
+		transition:
+			opacity var(--dur) var(--ease-out),
+			transform var(--dur) var(--ease-spring);
+	}
+
+	.skills__nav-link:hover,
+	.skills__nav-link.is-active {
+		color: var(--c-white);
+		transform: translate3d(6px, 0, 0);
+	}
+
+	.skills__nav-link:hover .skills__nav-dot,
+	.skills__nav-link.is-active .skills__nav-dot {
+		opacity: 1;
+		transform: none;
+	}
+
+	.skills__content {
+		display: flex;
+		flex-direction: column;
+		gap: 34px;
+	}
+
+	.skills__body {
+		max-width: 60ch;
+		color: rgba(242, 242, 247, 0.78);
+	}
+
+	.skills__group {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		scroll-margin-top: 120px;
+	}
+
+	.skills__group-title {
+		font-size: 0.9375rem;
+		font-weight: 500;
+		letter-spacing: 0.01em;
+		color: rgba(242, 242, 247, 0.62);
+	}
+
+	.skills__pills {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.pill {
+		padding: 9px 18px;
+		border-radius: 40px;
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		background: rgba(255, 255, 255, 0.02);
+		font-size: 0.9375rem;
+		font-weight: 400;
+		color: rgba(242, 242, 247, 0.9);
+		cursor: default;
+		transition:
+			transform var(--dur) var(--ease-spring),
+			border-color var(--dur) ease,
+			background var(--dur) ease,
+			color var(--dur) ease;
+	}
+
+	.pill:hover {
+		transform: translate3d(0, -4px, 0);
+		border-color: var(--c-accent);
+		background: var(--c-accent-soft);
+		color: var(--c-white);
+	}
+
+	@media (max-width: 900px) {
+		.skills__rail {
+			position: static;
+		}
+
+		.skills__nav {
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 8px 18px;
+		}
+
+		.skills__nav-link {
+			font-size: 0.9375rem;
+		}
+	}
+</style>
+
+<script>
+	/* Keep the left rail in sync with whichever pill group is on screen. */
+	const railLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-skill-nav]'));
+	const groups = Array.from(document.querySelectorAll<HTMLElement>('[data-skill-group]'));
+
+	if (railLinks.length && groups.length) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (!entry.isIntersecting) continue;
+					const id = (entry.target as HTMLElement).dataset.skillGroup;
+					for (const link of railLinks) {
+						link.classList.toggle('is-active', link.dataset.skillNav === id);
+					}
+				}
+			},
+			{ rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+		);
+
+		groups.forEach((group) => observer.observe(group));
+	}
+</script>

@@ -1,0 +1,400 @@
+---
+import { about } from '../data/content';
+import Icon from './Icon.astro';
+import Media from './Media.astro';
+---
+
+<section class="section section--light about" id="about">
+	<div class="container split">
+		<h2 class="h-display" data-reveal="left">{about.heading}</h2>
+
+		<div class="about__content">
+			<p class="body body--muted about__body" data-reveal>{about.body}</p>
+
+			<div class="carousel" data-carousel data-reveal style="--reveal-delay:120ms">
+				<ul class="carousel__track" data-carousel-track tabindex="0" aria-label="Photo gallery">
+					{
+						about.gallery.map((shot, i) => (
+							<li class="carousel__item" data-carousel-item aria-current={i === 0 ? 'true' : 'false'}>
+								<button class="carousel__btn" type="button" data-carousel-go={i} aria-label={shot.alt}>
+									<Media
+										src={shot.src}
+										alt={shot.alt}
+										tone="light"
+										loading={i < 2 ? 'eager' : 'lazy'}
+										widths={[170, 340, 680]}
+										sizes="(max-width: 900px) 68vw, 340px"
+									/>
+								</button>
+							</li>
+						))
+					}
+				</ul>
+
+				<div class="carousel__controls">
+					<button class="navbtn" type="button" data-carousel-prev aria-label="Previous photos">
+						<span class="navbtn__ring"></span>
+						<span class="navbtn__icons">
+							<Icon name="arrow-left" size={20} />
+							<Icon name="arrow-left" size={20} />
+						</span>
+					</button>
+
+					<button class="navbtn" type="button" data-carousel-next aria-label="Next photos">
+						<span class="navbtn__ring"></span>
+						<span class="navbtn__icons">
+							<Icon name="arrow-right" size={20} />
+							<Icon name="arrow-right" size={20} />
+						</span>
+					</button>
+
+					<span class="carousel__progress" aria-hidden="true">
+						<span class="carousel__progress-bar" data-carousel-progress></span>
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.about__content {
+		display: flex;
+		flex-direction: column;
+		gap: 34px;
+	}
+
+	.about__body {
+		max-width: 58ch;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Track                                                               */
+	/* ------------------------------------------------------------------ */
+
+	/* One shot is expanded at a time; the others collapse to a narrow strip.
+	   Only the frame width animates — the image inside is always cropped to
+	   fill (object-fit: cover in Media.astro), never squashed. */
+	.carousel {
+		--shot-expanded: min(340px, 72vw);
+		--shot-collapsed: min(124px, 21vw);
+		--shot-height: 234px;
+	}
+
+	.carousel__track {
+		display: flex;
+		align-items: stretch;
+		gap: 14px;
+		height: var(--shot-height);
+		overflow-x: auto;
+		scroll-behavior: smooth;
+		scrollbar-width: none;
+		padding-bottom: 4px;
+	}
+
+	.carousel__track::-webkit-scrollbar {
+		display: none;
+	}
+
+	.carousel__track:focus-visible {
+		outline: 2px solid var(--c-accent);
+		outline-offset: 6px;
+		border-radius: 20px;
+	}
+
+	.carousel__item {
+		flex: 0 0 var(--shot-collapsed);
+		width: var(--shot-collapsed);
+		height: 100%;
+		border-radius: 20px;
+		overflow: hidden;
+		border: 1px solid #d5d5d5;
+		background: var(--c-light);
+		transition:
+			flex-basis var(--dur) var(--ease-out),
+			width var(--dur) var(--ease-out),
+			box-shadow var(--dur) var(--ease-out);
+	}
+
+	.carousel__item[aria-current='true'] {
+		flex-basis: var(--shot-expanded);
+		width: var(--shot-expanded);
+	}
+
+	.carousel__item:hover {
+		box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+	}
+
+	.carousel__btn {
+		display: block;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		border: 0;
+		background: none;
+		border-radius: inherit;
+		cursor: pointer;
+	}
+
+	.carousel__btn:focus-visible {
+		outline: 2px solid var(--c-accent);
+		outline-offset: -4px;
+		border-radius: inherit;
+	}
+
+	/* The crop stays centred as the frame narrows, so faces keep their
+	   position instead of drifting to one edge. */
+	.carousel__btn :global(.media) {
+		object-fit: cover;
+		object-position: center;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.carousel__item {
+			transition: none;
+		}
+
+		.carousel__track {
+			scroll-behavior: auto;
+		}
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Controls                                                            */
+	/* ------------------------------------------------------------------ */
+
+	.carousel__controls {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		margin-top: 26px;
+	}
+
+	.navbtn {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 52px;
+		height: 52px;
+		border-radius: 50%;
+		border: 1px solid rgba(0, 0, 0, 0.28);
+		color: var(--c-ink);
+		overflow: hidden;
+		transition:
+			color var(--dur) var(--ease-out),
+			border-color var(--dur) var(--ease-out),
+			transform var(--dur) var(--ease-spring),
+			opacity var(--dur) ease;
+	}
+
+	/* Ink fill grows from the centre on hover. */
+	.navbtn::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: var(--c-ink);
+		transform: scale(0);
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	.navbtn:hover:not(:disabled) {
+		color: var(--c-white);
+		border-color: var(--c-ink);
+		transform: scale(1.09);
+	}
+
+	.navbtn:hover:not(:disabled)::before {
+		transform: scale(1);
+	}
+
+	.navbtn:active:not(:disabled) {
+		transform: scale(0.94);
+	}
+
+	.navbtn:disabled {
+		opacity: 0.28;
+		cursor: not-allowed;
+	}
+
+	/* Two arrows stacked: on hover one exits, the next enters from the far
+	   side, so the direction of travel is unmistakable. */
+	.navbtn__icons {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		place-items: center;
+		width: 20px;
+		height: 20px;
+		overflow: hidden;
+	}
+
+	.navbtn__icons :global(svg) {
+		grid-area: 1 / 1;
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	[data-carousel-prev] .navbtn__icons :global(svg:last-child) {
+		transform: translate3d(150%, 0, 0);
+	}
+
+	[data-carousel-prev]:hover:not(:disabled) .navbtn__icons :global(svg:first-child) {
+		transform: translate3d(-150%, 0, 0);
+	}
+
+	[data-carousel-next] .navbtn__icons :global(svg:last-child) {
+		transform: translate3d(-150%, 0, 0);
+	}
+
+	[data-carousel-next]:hover:not(:disabled) .navbtn__icons :global(svg:first-child) {
+		transform: translate3d(150%, 0, 0);
+	}
+
+	.navbtn:hover:not(:disabled) .navbtn__icons :global(svg:last-child) {
+		transform: none;
+	}
+
+	/* Expanding ring fired on every activation. */
+	.navbtn__ring {
+		position: absolute;
+		inset: -1px;
+		border-radius: 50%;
+		border: 2px solid var(--c-accent);
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.navbtn.is-pulsing .navbtn__ring {
+		animation: ring 560ms var(--ease-out);
+	}
+
+	@keyframes ring {
+		0% {
+			opacity: 0.9;
+			transform: scale(1);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1.65);
+		}
+	}
+
+	.carousel__progress {
+		flex: 1;
+		max-width: 180px;
+		height: 2px;
+		margin-left: 6px;
+		background: rgba(0, 0, 0, 0.12);
+		border-radius: 2px;
+		overflow: hidden;
+	}
+
+	.carousel__progress-bar {
+		display: block;
+		height: 100%;
+		width: 30%;
+		border-radius: 2px;
+		background: var(--c-accent);
+		transition:
+			width var(--dur) var(--ease-out),
+			margin-left var(--dur) var(--ease-out);
+	}
+
+	@media (max-width: 900px) {
+		.carousel {
+			--shot-expanded: min(300px, 68vw);
+			--shot-collapsed: min(96px, 20vw);
+			--shot-height: 200px;
+		}
+	}
+</style>
+
+<script>
+	document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((root) => {
+		const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+		const prev = root.querySelector<HTMLButtonElement>('[data-carousel-prev]');
+		const next = root.querySelector<HTMLButtonElement>('[data-carousel-next]');
+		const progress = root.querySelector<HTMLElement>('[data-carousel-progress]');
+		if (!track || !prev || !next) return;
+
+		const items = [...root.querySelectorAll<HTMLElement>('[data-carousel-item]')];
+		if (!items.length) return;
+
+		let index = 0;
+
+		const sync = () => {
+			items.forEach((item, i) => {
+				item.setAttribute('aria-current', i === index ? 'true' : 'false');
+			});
+
+			prev.disabled = index === 0;
+			next.disabled = index === items.length - 1;
+
+			if (progress) {
+				/* One segment per shot, sliding to mirror the active index. */
+				const widthPct = 100 / items.length;
+				progress.style.width = `${widthPct}%`;
+				progress.style.marginLeft = `${index * widthPct}%`;
+			}
+
+		};
+
+		/* Runs once the width transition has settled, so the measurements below
+		   reflect the final expanded/collapsed sizes rather than mid-animation
+		   ones. Only matters when the row is wider than its container. */
+		const keepInView = () => {
+			const item = items[index];
+			const overflowLeft = item.offsetLeft - track.scrollLeft;
+			const overflowRight = overflowLeft + item.offsetWidth - track.clientWidth;
+			if (overflowLeft < 0) {
+				track.scrollBy({ left: overflowLeft - 14 });
+			} else if (overflowRight > 0) {
+				track.scrollBy({ left: overflowRight + 14 });
+			}
+		};
+
+		const pulse = (button: HTMLButtonElement) => {
+			button.classList.remove('is-pulsing');
+			/* Force a reflow so the animation restarts on rapid clicks. */
+			void button.offsetWidth;
+			button.classList.add('is-pulsing');
+		};
+
+		const goTo = (target: number, button?: HTMLButtonElement) => {
+			const clamped = Math.max(0, Math.min(items.length - 1, target));
+			if (clamped === index) return;
+			index = clamped;
+			sync();
+			if (button) pulse(button);
+		};
+
+		prev.addEventListener('click', () => goTo(index - 1, prev));
+		next.addEventListener('click', () => goTo(index + 1, next));
+
+		/* Clicking a collapsed shot promotes it to the expanded slot. */
+		items.forEach((item, i) => {
+			item.querySelector('[data-carousel-go]')?.addEventListener('click', () => goTo(i));
+		});
+
+		/* One transition per item fires; react to the active one only. */
+		track.addEventListener('transitionend', (event) => {
+			if (event.propertyName === 'flex-basis' && event.target === items[index]) {
+				keepInView();
+			}
+		});
+
+		window.addEventListener('resize', keepInView);
+
+		track.addEventListener('keydown', (event) => {
+			if (event.key === 'ArrowRight') {
+				event.preventDefault();
+				goTo(index + 1, next);
+			} else if (event.key === 'ArrowLeft') {
+				event.preventDefault();
+				goTo(index - 1, prev);
+			}
+		});
+
+		sync();
+	});
+</script>

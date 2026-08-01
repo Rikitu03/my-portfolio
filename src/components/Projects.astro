@@ -1,0 +1,710 @@
+---
+import { projects, projectsToc } from '../data/content';
+import Icon from './Icon.astro';
+import Lightbox from './Lightbox.astro';
+import Media from './Media.astro';
+---
+
+<section id="projects">
+	<div class="section section--light projects-toc">
+		<div class="container split">
+		<div data-reveal="left">
+			<h2 class="h-display">{projectsToc.heading}</h2>
+			<p class="body body--muted projects-toc__sub">{projectsToc.sub}</p>
+		</div>
+
+		<ol class="toc" data-reveal-stagger>
+				{
+					projectsToc.items.map((item) => (
+						<li class:list={['toc__row', item.dim && 'toc__row--dim']}>
+							<span class="toc__index">{item.index}</span>
+							<span class="toc__label">{item.label}</span>
+							{item.muted && <span class="toc__muted">{item.muted}</span>}
+							<span class="toc__rule" />
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</div>
+
+	{/* --- The stack --------------------------------------------------- */}
+	<div class="stack" data-stack>
+		{
+			projects.map((project, i) => (
+				<article class="stack__card" style={`--i:${i}`} data-stack-card>
+					<div class:list={['stack__inner', `stack__inner--${project.theme}`]}>
+						<div class="container stack__grid">
+							{/* Figma `Header` 3:770 — Title column left, Content column right
+							    stacking copy over the cover over the thumbnail strip. */}
+							<header class="stack__head">
+								<span class="stack__index">{project.index}</span>
+								<h3 class="stack__name">{project.name}</h3>
+								<p class="stack__kind">{project.kind}</p>
+								{project.comingSoon && <span class="stack__badge">Coming Soon</span>}
+								{/* Figma `title_area` 207:737 — "Visit site" sits under the
+								    title. The arrow and hover are the site idiom, not Figma. */}
+								{project.href && (
+									<a class="visit" href={project.href} target="_blank" rel="noopener noreferrer">
+										<span class="visit__label">
+											Visit site
+											<span class="visit__rule" aria-hidden="true" />
+										</span>
+										<span class="visit__icon" aria-hidden="true">
+											<Icon name="arrow-up-right" size={22} />
+											<Icon name="arrow-up-right" size={22} />
+										</span>
+									</a>
+								)}
+							</header>
+
+							<div class="stack__body">
+								<p class="body stack__copy">{project.body}</p>
+
+								<figure class="stack__cover">
+									<button
+										class="stack__cover-btn"
+										type="button"
+										data-lb-open={`gallery-${project.index}`}
+										data-lb-index="0"
+										aria-label={`Open ${project.name} gallery`}
+									>
+										<Media
+											src={project.cover}
+											alt={`${project.name} — main screen`}
+											label={`${project.name} cover`}
+											tone={project.theme}
+											widths={[592, 1184]}
+											sizes="(max-width: 900px) 100vw, 592px"
+										/>
+									</button>
+								</figure>
+
+								{/* Strip shows the first three; the badge counts whatever is
+								    left. Index 0 is the cover, so gallery item t is t + 1. */}
+								<ul class="thumbs">
+									{project.gallery.slice(0, 3).map((thumb, t) => (
+										<li class="thumbs__item" style={`--t:${t}`}>
+											<button
+												class="thumbs__btn"
+												type="button"
+												data-lb-open={`gallery-${project.index}`}
+												data-lb-index={t + 1}
+												aria-label={`Open ${project.name} screen ${t + 1}`}
+											>
+												<Media
+													src={thumb}
+													alt={`${project.name} screen ${t + 1}`}
+													label=""
+													tone={project.theme}
+													class="is-thumb"
+													widths={[153, 306]}
+													sizes="153px"
+												/>
+											</button>
+										</li>
+									))}
+									{project.gallery.length > 3 && (
+										<li class="thumbs__more">
+											<button
+												type="button"
+												data-lb-open={`gallery-${project.index}`}
+												data-lb-index="4"
+												aria-label={`Show ${project.gallery.length - 3} more ${project.name} screens`}
+											>
+												<span>+{project.gallery.length - 3}</span>
+											</button>
+										</li>
+									)}
+								</ul>
+							</div>
+
+							<Lightbox
+								id={`gallery-${project.index}`}
+								name={project.name}
+								sources={[project.cover, ...project.gallery]}
+							/>
+						</div>
+					</div>
+				</article>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	/* ------------------------------------------------------------------ */
+	/* Table of contents                                                   */
+	/* ------------------------------------------------------------------ */
+
+	.projects-toc__sub {
+		margin-top: 12px;
+	}
+
+	.toc {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.toc__row {
+		position: relative;
+		display: flex;
+		align-items: baseline;
+		gap: 14px;
+		padding: 10px 4px;
+		font-size: clamp(1.25rem, 0.9rem + 1.1vw, 1.875rem);
+		font-weight: 500;
+		letter-spacing: -0.01em;
+		cursor: default;
+		transition:
+			transform var(--dur) var(--ease-out),
+			color var(--dur) ease;
+	}
+
+	.toc__row--dim {
+		color: rgba(0, 0, 0, 0.38);
+	}
+
+	.toc__index {
+		font-variant-numeric: tabular-nums;
+		color: rgba(0, 0, 0, 0.45);
+		transition: color var(--dur) ease;
+	}
+
+	.toc__muted {
+		color: rgba(0, 0, 0, 0.4);
+		font-size: 0.72em;
+	}
+
+	/* Rule draws in from the left on hover. */
+	.toc__rule {
+		position: absolute;
+		left: 4px;
+		right: 4px;
+		bottom: 4px;
+		height: 1px;
+		background: currentColor;
+		opacity: 0.16;
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+
+	.toc__row:hover {
+		transform: translate3d(10px, 0, 0);
+	}
+
+	.toc__row:hover .toc__index {
+		color: var(--c-accent);
+	}
+
+	.toc__row:hover .toc__rule {
+		transform: scaleX(1);
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Sticky stack                                                        */
+	/* ------------------------------------------------------------------ */
+
+	.stack {
+		position: relative;
+		/* Room under the last card so it can settle before the next section. */
+		padding-bottom: 10vh;
+	}
+
+	/* The sticky element stays untransformed — scaling a sticky box is
+	   unreliable across browsers, so the visual panel inside does the moving. */
+	.stack__card {
+		position: sticky;
+		/* Each card parks a little lower than the one before, so the stacked
+		   edges stay visible — the layered look from the reference. The offset
+		   lives in custom properties so the breakpoints below stay the source
+		   of truth while the script can still cap it via --stick-top. */
+		--stick-base: 88px;
+		--stick-step: 16px;
+		top: var(--stick-top, calc(var(--stick-base) + var(--i) * var(--stick-step)));
+	}
+
+	/* Hugs its content, like the Figma frame's auto-layout — a card is only as
+	   tall as its copy and media need. Padding is Figma's: 32 top, 50 bottom,
+	   with the 32 sides coming from the container gutter. */
+	.stack__inner {
+		position: relative;
+		display: flex;
+		align-items: center;
+		padding-top: 32px;
+		padding-bottom: 50px;
+		border-radius: 28px;
+		overflow: hidden;
+		/* Set by the scroll handler as the next card covers this one. */
+		transform: scale(var(--s, 1));
+		transform-origin: center top;
+		transition: transform 120ms linear;
+		will-change: transform;
+	}
+
+	.stack__inner::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: #000000;
+		opacity: var(--dim, 0);
+		pointer-events: none;
+		transition: opacity 120ms linear;
+	}
+
+	.stack__inner--dark {
+		background: var(--c-dark);
+		color: var(--c-ink-invert);
+		box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.5);
+	}
+
+	.stack__inner--light {
+		background: var(--c-white);
+		color: var(--c-ink);
+		box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.22);
+	}
+
+	/* 1216 container = 592 + 32 + 592, straight from the Figma frame. */
+	.stack__grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 32px;
+		align-items: start;
+	}
+
+	.stack__head {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.stack__index {
+		font-size: clamp(2rem, 1.2rem + 3.2vw, 3.75rem);
+		font-weight: 500;
+		line-height: 1.05;
+		color: var(--c-accent);
+	}
+
+	.stack__name {
+		font-size: clamp(2rem, 1.2rem + 3.2vw, 3.75rem);
+		font-weight: 500;
+		letter-spacing: -0.015em;
+		line-height: 1.05;
+	}
+
+	.stack__kind {
+		margin-top: 16px;
+		font-size: 1.125rem;
+		font-weight: 500;
+		opacity: 0.75;
+	}
+
+	/* Figma has this at 30px on the 1440 frame, alongside the 60px title —
+	   the same 1:1 scale .stack__name is built on. currentColor picks up
+	   --c-ink / --c-ink-invert from the card, matching the #f2f2f7 fill the
+	   design uses on the dark variants. */
+	.visit {
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		gap: 14px;
+		margin-top: 40px;
+		font-size: clamp(1.25rem, 0.85rem + 1.6vw, 1.875rem);
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		line-height: 1.2;
+		color: currentColor;
+		transition: color var(--dur) var(--ease-out);
+	}
+
+	.visit__label {
+		position: relative;
+	}
+
+	/* Wipes in from the left, then out to the right on release — the same
+	   grow-and-peel move the hero typewriter block uses. */
+	.visit__rule {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -0.12em;
+		height: 2px;
+		background: var(--c-accent);
+		transform: scaleX(0);
+		transform-origin: right center;
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	.visit:hover .visit__rule,
+	.visit:focus-visible .visit__rule {
+		transform: scaleX(1);
+		transform-origin: left center;
+	}
+
+	/* Two stacked arrows: the first leaves up-right, its twin arrives from
+	   the opposite corner — the .btn__icon idiom from the hero. */
+	.visit__icon {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		overflow: hidden;
+		background: color-mix(in srgb, currentColor 10%, transparent);
+		transition:
+			background var(--dur) ease,
+			transform var(--dur) var(--ease-spring);
+	}
+
+	.visit__icon :global(svg) {
+		grid-area: 1 / 1;
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	.visit__icon :global(svg:last-child) {
+		transform: translate3d(-130%, 130%, 0);
+	}
+
+	.visit:hover .visit__icon :global(svg:first-child),
+	.visit:focus-visible .visit__icon :global(svg:first-child) {
+		transform: translate3d(130%, -130%, 0);
+	}
+
+	.visit:hover .visit__icon :global(svg:last-child),
+	.visit:focus-visible .visit__icon :global(svg:last-child) {
+		transform: none;
+	}
+
+	.visit:hover,
+	.visit:focus-visible {
+		color: var(--c-accent);
+	}
+
+	.visit:hover .visit__icon,
+	.visit:focus-visible .visit__icon {
+		background: var(--c-accent-soft);
+		transform: translate3d(2px, -2px, 0);
+	}
+
+	.stack__badge {
+		align-self: flex-start;
+		margin-top: 16px;
+		padding: 6px 14px;
+		border-radius: 40px;
+		border: 1px solid currentColor;
+		font-size: 0.75rem;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		opacity: 0.6;
+	}
+
+	/* Copy → cover → thumbnail strip, 32px apart as in Figma. */
+	.stack__body {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+
+	.stack__copy {
+		max-width: 62ch;
+	}
+
+	.stack__cover {
+		margin: 0;
+		aspect-ratio: 592 / 300;
+		border-radius: 20px;
+		overflow: hidden;
+		border: 1px solid rgba(213, 213, 213, 0.5);
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+
+	.stack__cover:hover {
+		transform: scale(1.015);
+	}
+
+	.thumbs {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.thumbs__item {
+		flex: 1 1 0;
+		max-width: 153px;
+		aspect-ratio: 153 / 87;
+		border-radius: 14px;
+		overflow: hidden;
+		border: 1px solid rgba(213, 213, 213, 0.4);
+		transition: transform var(--dur) var(--ease-spring);
+	}
+
+	.thumbs:hover .thumbs__item {
+		transform: translate3d(0, -5px, 0) rotate(calc((var(--t) - 1) * 1.6deg));
+	}
+
+	/* The buttons only carry the click target — every visual (radius, border,
+	   the hover lift on the parent) stays where it already was. */
+	.stack__cover-btn,
+	.thumbs__btn {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border-radius: inherit;
+		cursor: zoom-in;
+	}
+
+	.thumbs__more {
+		flex: none;
+		margin-left: 5px;
+	}
+
+	.thumbs__more button {
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		border: 1px solid currentColor;
+		color: inherit;
+		font-size: 1rem;
+		font-variant-numeric: tabular-nums;
+		cursor: pointer;
+		opacity: 0.7;
+		transition:
+			transform var(--dur) var(--ease-spring),
+			opacity var(--dur) ease,
+			background var(--dur) ease,
+			border-color var(--dur) ease,
+			color var(--dur) ease;
+	}
+
+	.thumbs:hover .thumbs__more button,
+	.thumbs__more button:focus-visible {
+		transform: scale(1.12);
+		opacity: 1;
+		background: var(--c-accent);
+		border-color: var(--c-accent);
+		color: var(--c-white);
+	}
+
+	/* A card is only reachable while it fits the space it pins into — a sticky
+	   box taller than `viewport − top` keeps its tail below the fold where no
+	   amount of scrolling can bring it back. The frame still hugs its content;
+	   what gives on a short screen is the content's own rhythm. Only the right
+	   column (copy → cover → thumbs) sets the height, so only it is trimmed. */
+	@media (min-width: 901px) and (max-height: 860px) {
+		.stack__card {
+			--stick-base: 72px;
+			--stick-step: 12px;
+		}
+
+		.stack__inner {
+			padding-top: 24px;
+			padding-bottom: 34px;
+		}
+
+		.stack__kind {
+			margin-top: 12px;
+		}
+
+		.visit {
+			margin-top: 28px;
+		}
+
+		.stack__body {
+			gap: 22px;
+		}
+
+		.stack__copy {
+			font-size: 1.0625rem;
+		}
+
+		.stack__cover {
+			aspect-ratio: 592 / 265;
+		}
+	}
+
+	@media (min-width: 901px) and (max-height: 740px) {
+		.stack__card {
+			--stick-base: 60px;
+			--stick-step: 8px;
+		}
+
+		.stack__inner {
+			padding-top: 18px;
+			padding-bottom: 24px;
+		}
+
+		.visit {
+			margin-top: 18px;
+		}
+
+		.stack__body {
+			gap: 16px;
+		}
+
+		.stack__copy {
+			font-size: 1rem;
+		}
+
+		.stack__cover {
+			aspect-ratio: 592 / 235;
+		}
+
+		.thumbs__item {
+			max-width: 132px;
+		}
+	}
+
+	@media (max-width: 900px) {
+		.stack__card {
+			--stick-base: 76px;
+			--stick-step: 10px;
+		}
+
+		.stack__inner {
+			padding-top: 28px;
+			padding-bottom: 36px;
+		}
+
+		.stack__grid {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 24px;
+		}
+
+		.stack__body {
+			gap: 24px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.stack__card {
+			position: static;
+			margin-bottom: 16px;
+		}
+
+		.stack__inner {
+			transform: none;
+		}
+
+		.stack__inner::after {
+			opacity: 0;
+		}
+
+		/* Keep the colour change as the hover affordance; drop the travel. */
+		.visit__icon,
+		.visit__icon :global(svg),
+		.visit__rule {
+			transition: none;
+		}
+
+		.visit:hover .visit__icon,
+		.visit:focus-visible .visit__icon {
+			transform: none;
+		}
+	}
+</style>
+
+<script>
+	const stack = document.querySelector<HTMLElement>('[data-stack]');
+	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+	if (stack && !reduced.matches) {
+		const cards = Array.from(stack.querySelectorAll<HTMLElement>('[data-stack-card]'));
+		let raf = 0;
+		let remeasure = true;
+
+		/* Breathing room under a card that had to be pushed up to fit. */
+		const BOTTOM_GAP = 24;
+
+		/* The breakpoints shrink a card until it fits the viewport, but a long
+		   description on a very short screen can still outgrow it. Rather than
+		   pin such a card at the staircase offset and strand its bottom edge
+		   below the fold — where scrolling can never reach it, because the card
+		   is pinned — park it bottom-aligned. The head slides up under the nav
+		   and nothing becomes unreachable.
+
+		   Reads every card before it writes any: interleaving the two would
+		   force a layout flush per card. */
+		const fit = () => {
+			const tops = cards.map((card, i) => {
+				const styles = getComputedStyle(card);
+				const base = parseFloat(styles.getPropertyValue('--stick-base')) || 88;
+				const step = parseFloat(styles.getPropertyValue('--stick-step')) || 16;
+				const desired = base + i * step;
+				const max = window.innerHeight - card.offsetHeight - BOTTOM_GAP;
+
+				return max < desired ? `${Math.round(max)}px` : '';
+			});
+
+			cards.forEach((card, i) => {
+				/* Clearing matters as much as setting — a card that no longer
+				   needs the cap has to go back to the CSS staircase. */
+				if (tops[i]) card.style.setProperty('--stick-top', tops[i]);
+				else card.style.removeProperty('--stick-top');
+			});
+		};
+
+		/* A card shrinks and darkens in proportion to how far the following
+		   card has slid over it — that's what sells the depth of the stack. */
+		const update = () => {
+			raf = 0;
+
+			/* Only when heights or the viewport actually changed; a capped card
+			   sits at a different `top`, which moves the rects read below. */
+			if (remeasure) {
+				remeasure = false;
+				fit();
+			}
+
+			for (let i = 0; i < cards.length; i += 1) {
+				const card = cards[i];
+				const nextCard = cards[i + 1];
+
+				if (!nextCard) {
+					card.style.setProperty('--s', '1');
+					card.style.setProperty('--dim', '0');
+					continue;
+				}
+
+				const myTop = card.getBoundingClientRect().top;
+				const nextTop = nextCard.getBoundingClientRect().top;
+				const travel = card.offsetHeight || 1;
+
+				/* 0 while the next card is still a full card-height below,
+				   1 once it has landed on top of this one. */
+				const p = Math.min(Math.max(1 - (nextTop - myTop) / travel, 0), 1);
+
+				card.style.setProperty('--s', (1 - p * 0.055).toFixed(4));
+				card.style.setProperty('--dim', (p * 0.42).toFixed(4));
+			}
+		};
+
+		const schedule = () => {
+			if (!raf) raf = requestAnimationFrame(update);
+		};
+
+		/* Card heights and the viewport never change on scroll, so only these
+		   paths need the (layout-reading) fit() pass. */
+		const scheduleFit = () => {
+			remeasure = true;
+			schedule();
+		};
+
+		window.addEventListener('scroll', schedule, { passive: true });
+		window.addEventListener('resize', scheduleFit);
+
+		/* Cards grow after the fact — late fonts, images settling into their
+		   ratio boxes. Re-measure when they do. No observer loop: fit() only
+		   ever writes `top`, never anything that affects height. */
+		if ('ResizeObserver' in window) {
+			const ro = new ResizeObserver(scheduleFit);
+			for (const card of cards) ro.observe(card);
+		}
+
+		update();
+	}
+</script>

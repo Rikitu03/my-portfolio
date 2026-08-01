@@ -1,0 +1,237 @@
+---
+import { navItems } from '../data/content';
+---
+
+<header class="nav" data-nav>
+	<nav class="nav__pill" aria-label="Primary">
+		<span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
+		<ul class="nav__list">
+			{
+				navItems.map((item) => (
+					<li>
+						<a class="nav__link" href={item.href} data-nav-link data-target={item.href.slice(1)}>
+							<span class="nav__index">{item.index}</span>
+							<span class="nav__label">{item.label}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</header>
+
+<style>
+	.nav {
+		position: fixed;
+		inset: 0 0 auto 0;
+		z-index: 100;
+		display: flex;
+		justify-content: center;
+		padding: 26px var(--gutter);
+		pointer-events: none;
+		/* Drops in once the page has painted */
+		transform: translate3d(0, -140%, 0);
+		opacity: 0;
+		transition:
+			transform 900ms var(--ease-out) 260ms,
+			opacity 700ms ease 260ms;
+	}
+
+	.nav.is-ready {
+		transform: none;
+		opacity: 1;
+	}
+
+	.nav__pill {
+		position: relative;
+		pointer-events: auto;
+		width: min(1109px, 100%);
+		border-radius: 40px;
+		border: 1px solid rgba(255, 255, 255, 0.16);
+		background: rgba(10, 10, 10, 0.4);
+		backdrop-filter: blur(14px) saturate(140%);
+		-webkit-backdrop-filter: blur(14px) saturate(140%);
+		transition:
+			background var(--dur) ease,
+			border-color var(--dur) ease,
+			box-shadow var(--dur) ease;
+	}
+
+	/* Once past the hero the bar sits on light surfaces — go opaque and darker. */
+	.nav.is-scrolled .nav__pill {
+		background: rgba(8, 8, 8, 0.82);
+		border-color: rgba(255, 255, 255, 0.1);
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+	}
+
+	.nav__list {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 6px 10px;
+	}
+
+	.nav__link {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		padding: 8px 16px;
+		border-radius: 30px;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		letter-spacing: -0.01em;
+		color: rgba(255, 255, 255, 0.62);
+		white-space: nowrap;
+		transition: color var(--dur-fast) ease;
+	}
+
+	.nav__link:hover,
+	.nav__link.is-active {
+		color: #ffffff;
+	}
+
+	.nav__index {
+		font-size: 0.6875rem;
+		font-variant-numeric: tabular-nums;
+		color: var(--c-accent);
+		opacity: 0;
+		transform: translate3d(-4px, 0, 0);
+		transition:
+			opacity var(--dur-fast) var(--ease-out),
+			transform var(--dur-fast) var(--ease-out);
+	}
+
+	.nav__link:hover .nav__index,
+	.nav__link.is-active .nav__index {
+		opacity: 1;
+		transform: none;
+	}
+
+	.nav__label {
+		position: relative;
+	}
+
+	/* Underline sweeps in from the left on hover. */
+	.nav__label::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -3px;
+		height: 1px;
+		background: currentColor;
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	.nav__link:hover .nav__label::after {
+		transform: scaleX(1);
+	}
+
+	/* The travelling highlight behind the active item. */
+	.nav__indicator {
+		position: absolute;
+		top: 6px;
+		left: 0;
+		height: calc(100% - 12px);
+		border-radius: 30px;
+		background: rgba(255, 255, 255, 0.1);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+		opacity: 0;
+		transform: translate3d(var(--x, 0), 0, 0);
+		width: var(--w, 0);
+		transition:
+			transform 620ms var(--ease-spring),
+			width 620ms var(--ease-spring),
+			opacity var(--dur-fast) ease;
+		pointer-events: none;
+	}
+
+	.nav__indicator.is-on {
+		opacity: 1;
+	}
+
+	@media (max-width: 1040px) {
+		.nav {
+			padding: 16px var(--gutter);
+		}
+
+		.nav__pill {
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.nav__pill::-webkit-scrollbar {
+			display: none;
+		}
+
+		.nav__list {
+			justify-content: flex-start;
+			width: max-content;
+			min-width: 100%;
+		}
+
+		.nav__index {
+			display: none;
+		}
+	}
+</style>
+
+<script>
+	const nav = document.querySelector<HTMLElement>('[data-nav]');
+	const indicator = document.querySelector<HTMLElement>('[data-nav-indicator]');
+	const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'));
+
+	if (nav && indicator && links.length) {
+		requestAnimationFrame(() => nav.classList.add('is-ready'));
+
+		const moveIndicator = (link: HTMLAnchorElement | null) => {
+			if (!link) {
+				indicator.classList.remove('is-on');
+				return;
+			}
+			indicator.style.setProperty('--x', `${link.offsetLeft}px`);
+			indicator.style.setProperty('--w', `${link.offsetWidth}px`);
+			indicator.classList.add('is-on');
+		};
+
+		const setActive = (id: string | null) => {
+			let current: HTMLAnchorElement | null = null;
+			for (const link of links) {
+				const on = link.dataset.target === id;
+				link.classList.toggle('is-active', on);
+				if (on) current = link;
+			}
+			moveIndicator(current);
+		};
+
+		/* Scrollspy: the section occupying the middle of the viewport wins. */
+		const sections = links
+			.map((link) => document.getElementById(link.dataset.target ?? ''))
+			.filter((el): el is HTMLElement => Boolean(el));
+
+		const spy = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) setActive(entry.target.id);
+				}
+			},
+			{ rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+		);
+		sections.forEach((section) => spy.observe(section));
+
+		/* Solid backdrop once we leave the hero. */
+		const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > window.innerHeight * 0.6);
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+
+		window.addEventListener('resize', () => {
+			moveIndicator(links.find((l) => l.classList.contains('is-active')) ?? null);
+		});
+	}
+</script>

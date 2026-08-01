@@ -1,0 +1,110 @@
+---
+import { footer } from '../data/content';
+import Icon from './Icon.astro';
+---
+
+<footer class="footer" id="contact">
+	<div class="container">
+		<div class="footer__top">
+			<a class="wordmark" href="#home" aria-label="Back to top">
+				<span class="wordmark__mark"><Icon name="logo" size={44} /></span>
+				<span class="wordmark__text">{footer.wordmark}</span>
+			</a>
+
+			<ul class="footer__links" data-reveal-stagger>
+				{
+					footer.links.map((link) => (
+						<li>
+							<a class="footer__link" href={link.href} target="_blank" rel="noopener noreferrer">
+								<span>{link.label}</span>
+								<Icon name="arrow-up-right" size={14} />
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+
+		<div class="footer__bottom">
+			<p class="fine">{footer.legal}</p>
+			<p class="fine">{footer.rights}</p>
+		</div>
+	</div>
+</footer>
+
+<style>
+	.footer {
+		background: var(--c-white);
+		color: var(--c-ink);
+		padding-block: 56px 26px;
+	}
+
+	.footer__top {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 24px 56px;
+		padding-bottom: 34px;
+	}
+
+	.wordmark {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.wordmark__mark {
+		display: grid;
+		place-items: center;
+		transition: transform var(--dur) var(--ease-spring);
+	}
+
+	.wordmark__text {
+		font-size: clamp(3rem, 1.4rem + 6.4vw, 6.875rem);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1;
+	}
+
+	.wordmark:hover .wordmark__mark {
+		transform: translate3d(6px, 0, 0);
+	}
+
+	.footer__links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 28px;
+	}
+
+	.footer__link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		color: var(--c-muted);
+		transition: color var(--dur-fast) ease;
+	}
+
+	.footer__link :global(svg) {
+		transition: transform var(--dur) var(--ease-spring);
+	}
+
+	.footer__link:hover {
+		color: var(--c-ink);
+	}
+
+	.footer__link:hover :global(svg) {
+		transform: translate3d(3px, -3px, 0);
+	}
+
+	.footer__bottom {
+		display: flex;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 10px;
+		padding-top: 20px;
+		border-top: 1px solid var(--line-dark);
+		color: var(--c-muted);
+	}
+</style>

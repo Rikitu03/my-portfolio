@@ -1,0 +1,117 @@
+---
+import { education } from '../data/content';
+---
+
+<section class="section section--light education" id="education">
+	<div class="container">
+		<div class="split">
+			<h2 class="h-display" data-reveal="left">{education.heading}</h2>
+
+			<div class="education__copy">
+				<p class="body body--muted" data-reveal>{education.body}</p>
+				<p class="body body--muted" data-reveal style="--reveal-delay:100ms">{education.bodySecondary}</p>
+			</div>
+		</div>
+
+		<p class="education__label" data-reveal>{education.label}</p>
+
+		<ul class="courses" data-reveal-stagger>
+			{
+				education.courses.map((course) => (
+					<li class="course">
+						<span class="course__bar" />
+						<h3 class="course__title">{course.title}</h3>
+						<p class="fine course__meta">{course.units}</p>
+						<p class="fine course__meta">{course.year}</p>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<style>
+	.education__copy {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		max-width: 52ch;
+	}
+
+	.education__label {
+		margin-top: 72px;
+		font-size: 1.25rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.courses {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 28px;
+		margin-top: 26px;
+	}
+
+	.course {
+		position: relative;
+		padding-top: 18px;
+	}
+
+	/* Rule above each card fills with accent on hover. */
+	.course__bar {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: rgba(0, 0, 0, 0.12);
+		overflow: hidden;
+	}
+
+	.course__bar::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: var(--c-accent);
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+
+	.course:hover .course__bar::after {
+		transform: scaleX(1);
+	}
+
+	.course__title {
+		font-size: clamp(1.25rem, 0.95rem + 0.9vw, 1.875rem);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		line-height: 1.1;
+		transition: transform var(--dur) var(--ease-out);
+	}
+
+	.course:hover .course__title {
+		transform: translate3d(0, -3px, 0);
+	}
+
+	.course__meta {
+		margin-top: 10px;
+		color: var(--c-muted);
+	}
+
+	.course__meta + .course__meta {
+		margin-top: 2px;
+	}
+
+	@media (max-width: 1040px) {
+		.courses {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 560px) {
+		.courses {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>
