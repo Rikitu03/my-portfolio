@@ -10,6 +10,8 @@ const {
 	title = 'Jason Recto — Full Stack Developer',
 	description = 'Bridging the gap between beautiful aesthetics and robust functionality. Full-stack developer building web apps that solve real problems.',
 } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
@@ -20,12 +22,15 @@ const {
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
+		<link rel="canonical" href={canonicalURL} />
 
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:site_name" content="Jason Recto" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 
