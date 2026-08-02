@@ -3,6 +3,12 @@ import { projects, projectsToc } from '../data/content';
 import Icon from './Icon.astro';
 import Lightbox from './Lightbox.astro';
 import Media from './Media.astro';
+
+/* Which TOC rows link to a card is derived, never hand-authored, so the list
+   and the stack below it can't drift apart. A row with no matching project —
+   "Coming Soon" — renders as an <a> without href: same markup, but the browser
+   makes it inert and unfocusable for us. */
+const cardIndexes = new Set(projects.map((project) => project.index));
 ---
 
 <section id="projects">
@@ -15,14 +21,26 @@ import Media from './Media.astro';
 
 		<ol class="toc" data-reveal-stagger>
 				{
-					projectsToc.items.map((item) => (
-						<li class:list={['toc__row', item.dim && 'toc__row--dim']}>
-							<span class="toc__index">{item.index}</span>
-							<span class="toc__label">{item.label}</span>
-							{item.muted && <span class="toc__muted">{item.muted}</span>}
-							<span class="toc__rule" />
-						</li>
-					))
+					projectsToc.items.map((item) => {
+						const linked = cardIndexes.has(item.index);
+
+						return (
+							/* The row lives on the <a>, not the <li>: the stagger reveal
+							   animates the <li>'s transform and the hover animates the
+							   row's, so they need to be separate elements. */
+							<li>
+								<a
+									class:list={['toc__row', item.dim && 'toc__row--dim', linked && 'toc__row--link']}
+									href={linked ? `#project-${item.index}` : undefined}
+								>
+									<span class="toc__index">{item.index}</span>
+									<span class="toc__label">{item.label}</span>
+									{item.muted && <span class="toc__muted">{item.muted}</span>}
+									<span class="toc__rule" />
+								</a>
+							</li>
+						);
+					})
 				}
 			</ol>
 		</div>
@@ -32,7 +50,12 @@ import Media from './Media.astro';
 	<div class="stack" data-stack>
 		{
 			projects.map((project, i) => (
-				<article class="stack__card" style={`--i:${i}`} data-stack-card>
+				<article
+					class="stack__card"
+					id={`project-${project.index}`}
+					style={`--i:${i}`}
+					data-stack-card
+				>
 					<div class:list={['stack__inner', `stack__inner--${project.theme}`]}>
 						<div class="container stack__grid">
 							{/* Figma `Header` 3:770 — Title column left, Content column right
@@ -161,6 +184,12 @@ import Media from './Media.astro';
 			color var(--dur) ease;
 	}
 
+	/* Only rows that actually go somewhere get the pointer and the hover
+	   affordance — on an inert row both would be a lie. */
+	.toc__row--link {
+		cursor: pointer;
+	}
+
 	.toc__row--dim {
 		color: rgba(0, 0, 0, 0.38);
 	}
@@ -190,15 +219,18 @@ import Media from './Media.astro';
 		transition: transform var(--dur-slow) var(--ease-out);
 	}
 
-	.toc__row:hover {
+	.toc__row--link:hover,
+	.toc__row--link:focus-visible {
 		transform: translate3d(10px, 0, 0);
 	}
 
-	.toc__row:hover .toc__index {
+	.toc__row--link:hover .toc__index,
+	.toc__row--link:focus-visible .toc__index {
 		color: var(--c-accent);
 	}
 
-	.toc__row:hover .toc__rule {
+	.toc__row--link:hover .toc__rule,
+	.toc__row--link:focus-visible .toc__rule {
 		transform: scaleX(1);
 	}
 
