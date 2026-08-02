@@ -24,6 +24,7 @@ import Media from './Media.astro';
 										loading={i < 2 ? 'eager' : 'lazy'}
 										widths={[170, 340, 680]}
 										sizes="(max-width: 900px) 68vw, 340px"
+										class={shot.position ? `media--pos-${shot.position}` : undefined}
 									/>
 								</button>
 							</li>
@@ -147,6 +148,12 @@ import Media from './Media.astro';
 	.carousel__btn :global(.media) {
 		object-fit: cover;
 		object-position: center;
+	}
+
+	/* moment-5.jpg is a selfie where the face sits near the top of the frame;
+	   centring the crop cuts it off, so pull the visible window upward. */
+	.carousel__btn :global(.media--pos-top) {
+		object-position: center top;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

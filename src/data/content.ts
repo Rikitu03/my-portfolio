@@ -50,7 +50,7 @@ export const about = {
 		{ src: '/images/about_me/moment-2.jpg', alt: 'With classmates' },
 		{ src: '/images/about_me/moment-3.jpg', alt: 'Client presentation and interview' },
 		{ src: '/images/about_me/moment-4.jpg', alt: 'Presenting the thesis system' },
-		{ src: '/images/about_me/moment-5.jpg', alt: 'Thesis Defense' },
+		{ src: '/images/about_me/moment-5.jpg', alt: 'Thesis Defense', position: 'top' as const },
 	],
 };
 
