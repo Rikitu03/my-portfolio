@@ -152,19 +152,17 @@ export const projects: Project[] = [
 		body: "BayanLink is a live map for Pasig City that keeps working when the internet doesn't. During a storm or blackout, residents can post what they need or what they can offer — water, food, power, signal, medical help, or rescue — and see it show up across all 30 barangays. The map holds on to anything you report while you're offline and sends it the moment you reconnect. With no connection at all, a plain text message still gets your report through.",
 		cover: '/images/bayanlink/cover.png',
 		gallery: Array.from({ length: 6 }, (_, i) => `/images/bayanlink/bayanlink${i + 1}.png`),
-		href: '#',
 	},
 	{
 		index: '04',
 		name: 'ADVS',
-		kind: 'Automated Validation System',
+		kind: 'Automated Document Validation System',
 		theme: 'light',
 		body: "ADVS checks the paperwork suppliers hand over before a company agrees to work with them. Upload a permit or a registration and it reads the document, sorts it by type, and looks for signs it has been faked — a copied signature, an altered stamp, details that don't line up. Each one comes back with a risk score and a short report on a single dashboard, so the person approving vendors can go straight to what looks wrong instead of reading every page by hand.",
 		/* No dedicated cover was exported; advs1 is the landing hero, so the
 		   gallery picks up from advs2 to avoid showing it twice. */
 		cover: '/images/advs/advs1.png',
 		gallery: [2, 3, 4, 5].map((n) => `/images/advs/advs${n}.png`),
-		href: '#',
 	},
 	{
 		index: '05',

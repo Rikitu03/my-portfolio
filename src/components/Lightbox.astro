@@ -1,6 +1,6 @@
 ---
 import { Image, getImage } from 'astro:assets';
-import { resolveImages } from '../lib/images';
+import { resolveImage } from '../lib/images';
 import Icon from './Icon.astro';
 
 interface Props {
@@ -9,25 +9,34 @@ interface Props {
 	name: string;
 	/** Cover first, then every screenshot. */
 	sources: string[];
+	/** Optional per-source description. Any gap falls back to a numbered
+	    "<name> screenshot N", which is all a UI screenshot warrants — photos
+	    of people carry real alt text and should pass it in. */
+	alts?: string[];
 }
 
-const { id, name, sources } = Astro.props;
-const images = resolveImages(sources);
+const { id, name, sources, alts } = Astro.props;
+
+/* Paired before the missing-file filter runs, so a source with no asset
+   behind it drops its alt with it instead of shifting every later one. */
+const images = sources
+	.map((src, i) => ({ img: resolveImage(src), alt: alts?.[i] }))
+	.filter((entry): entry is { img: ImageMetadata; alt: string | undefined } => Boolean(entry.img));
 
 /* One optimized preview per image, capped at 1600px — sharp on a large
    display without shipping the multi-megabyte originals. Dimensions travel
    with each frame so swapping the preview never shifts the layout. */
 const frames = await Promise.all(
-	images.map(async (img) => {
+	images.map(async ({ img, alt }, i) => {
 		const width = Math.min(img.width, 1600);
 		const height = Math.round(img.height * (width / img.width));
 		const built = await getImage({ src: img, width, height, format: 'webp' });
-		return { src: built.src, width, height };
+		return { src: built.src, width, height, alt: alt ?? `${name} screenshot ${i + 1}` };
 	})
 );
 ---
 
-<dialog class="lb" id={id} data-lightbox aria-label={`${name} screenshots`}>
+<dialog class="lb" id={id} data-lightbox aria-label={`${name} gallery`}>
 	<div class="lb__shell">
 		<header class="lb__bar">
 			<p class="lb__title">{name}</p>
@@ -50,8 +59,7 @@ const frames = await Promise.all(
 				src={frames[0]?.src}
 				width={frames[0]?.width}
 				height={frames[0]?.height}
-				alt={`${name} screenshot 1`}
-				data-lb-alt-prefix={`${name} screenshot`}
+				alt={frames[0]?.alt}
 			/>
 
 			<button class="lb__nav" type="button" data-lb-step="1" aria-label="Next image">
@@ -63,7 +71,7 @@ const frames = await Promise.all(
 		    stage, which reads src/width/height straight off these buttons. */}
 		<ul class="lb__strip">
 			{
-				images.map((img, i) => (
+				images.map(({ img }, i) => (
 					<li>
 						<button
 							class="lb__chip"
@@ -72,7 +80,8 @@ const frames = await Promise.all(
 							data-src={frames[i].src}
 							data-w={frames[i].width}
 							data-h={frames[i].height}
-							aria-label={`Show ${name} screenshot ${i + 1}`}
+							data-alt={frames[i].alt}
+							aria-label={`Show ${frames[i].alt}`}
 						>
 							<Image src={img} alt="" widths={[88, 176]} sizes="88px" loading="lazy" />
 						</button>
@@ -248,7 +257,7 @@ const frames = await Promise.all(
 </style>
 
 <script>
-	type Frame = { src: string; width: number; height: number };
+	type Frame = { src: string; width: number; height: number; alt: string };
 
 	document.querySelectorAll<HTMLDialogElement>('[data-lightbox]').forEach((dialog) => {
 		const image = dialog.querySelector<HTMLImageElement>('[data-lb-image]');
@@ -256,11 +265,11 @@ const frames = await Promise.all(
 		const chips = Array.from(dialog.querySelectorAll<HTMLButtonElement>('[data-lb-go]'));
 		if (!image || !chips.length) return;
 
-		const prefix = image.dataset.lbAltPrefix ?? 'Screenshot';
 		const frames: Frame[] = chips.map((chip) => ({
 			src: chip.dataset.src ?? '',
 			width: Number(chip.dataset.w ?? 0),
 			height: Number(chip.dataset.h ?? 0),
+			alt: chip.dataset.alt ?? '',
 		}));
 
 		let index = 0;
@@ -273,7 +282,7 @@ const frames = await Promise.all(
 			image.src = frame.src;
 			image.width = frame.width;
 			image.height = frame.height;
-			image.alt = `${prefix} ${index + 1}`;
+			image.alt = frame.alt;
 			if (current) current.textContent = String(index + 1);
 
 			chips.forEach((chip, i) => chip.setAttribute('aria-current', String(i === index)));

@@ -66,9 +66,19 @@ const cardIndexes = new Set(projects.map((project) => project.index));
 								<p class="stack__kind">{project.kind}</p>
 								{project.comingSoon && <span class="stack__badge">Local Only</span>}
 								{/* Figma `title_area` 207:737 — "Visit site" sits under the
-								    title. The arrow and hover are the site idiom, not Figma. */}
-								{project.href && (
-									<a class="visit" href={project.href} target="_blank" rel="noopener noreferrer">
+								    title. The arrow and hover are the site idiom, not Figma.
+
+								    Work that isn't deployed still shows the link, just dimmed and
+								    inert: no href, which the browser already makes unclickable and
+								    unfocusable. "Local Only" work says so with its badge instead,
+								    so it keeps no link at all. */}
+								{!project.comingSoon && (
+									<a
+										class:list={['visit', !project.href && 'visit--inert']}
+										href={project.href}
+										target={project.href ? '_blank' : undefined}
+										rel={project.href ? 'noopener noreferrer' : undefined}
+									>
 										<span class="visit__label">
 											Visit site
 											<span class="visit__rule" aria-hidden="true" />
@@ -418,6 +428,15 @@ const cardIndexes = new Set(projects.map((project) => project.index));
 	.visit:focus-visible .visit__icon {
 		background: var(--c-accent-soft);
 		transform: translate3d(2px, -2px, 0);
+	}
+
+	/* Nothing to visit yet. An href-less <a> is already unclickable, but it
+	   still matches :hover — so the pointer is switched off at the element
+	   rather than unwinding the five hover rules above one by one. */
+	.visit--inert {
+		opacity: 0.38;
+		pointer-events: none;
+		user-select: none;
 	}
 
 	.stack__badge {

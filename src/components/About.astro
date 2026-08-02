@@ -1,7 +1,10 @@
 ---
 import { about } from '../data/content';
 import Icon from './Icon.astro';
+import Lightbox from './Lightbox.astro';
 import Media from './Media.astro';
+
+const galleryId = 'about-gallery';
 ---
 
 <section class="section section--light about" id="about">
@@ -16,7 +19,18 @@ import Media from './Media.astro';
 					{
 						about.gallery.map((shot, i) => (
 							<li class="carousel__item" data-carousel-item aria-current={i === 0 ? 'true' : 'false'}>
-								<button class="carousel__btn" type="button" data-carousel-go={i} aria-label={shot.alt}>
+								{/* Two jobs, split by state: a collapsed shot expands on click, the
+								    expanded one opens the lightbox. The carousel script swallows the
+								    first case before it reaches the lightbox's own trigger listener. */}
+								<button
+									class="carousel__btn"
+									type="button"
+									data-carousel-go={i}
+									data-alt={shot.alt}
+									data-lb-open={galleryId}
+									data-lb-index={i}
+									aria-label={i === 0 ? `View ${shot.alt} full size` : `Show ${shot.alt}`}
+								>
 									<Media
 										src={shot.src}
 										alt={shot.alt}
@@ -26,6 +40,10 @@ import Media from './Media.astro';
 										sizes="(max-width: 900px) 68vw, 340px"
 										class={shot.position ? `media--pos-${shot.position}` : undefined}
 									/>
+
+									<span class="carousel__zoom" aria-hidden="true">
+										<Icon name="expand" size={16} />
+									</span>
 								</button>
 							</li>
 						))
@@ -56,6 +74,13 @@ import Media from './Media.astro';
 			</div>
 		</div>
 	</div>
+
+	<Lightbox
+		id={galleryId}
+		name={about.heading}
+		sources={about.gallery.map((shot) => shot.src)}
+		alts={about.gallery.map((shot) => shot.alt)}
+	/>
 </section>
 
 <style>
@@ -127,6 +152,7 @@ import Media from './Media.astro';
 	}
 
 	.carousel__btn {
+		position: relative;
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -135,6 +161,39 @@ import Media from './Media.astro';
 		background: none;
 		border-radius: inherit;
 		cursor: pointer;
+	}
+
+	/* Only the expanded shot opens the lightbox, so only it gets the cue. */
+	.carousel__item[aria-current='true'] .carousel__btn {
+		cursor: zoom-in;
+	}
+
+	.carousel__zoom {
+		position: absolute;
+		right: 12px;
+		bottom: 12px;
+		display: grid;
+		place-items: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		color: var(--c-white);
+		background: rgba(0, 0, 0, 0.55);
+		opacity: 0;
+		transform: scale(0.85);
+		pointer-events: none;
+		transition:
+			opacity var(--dur) var(--ease-out),
+			transform var(--dur) var(--ease-spring);
+	}
+
+	.carousel__item[aria-current='true'] .carousel__zoom {
+		opacity: 1;
+		transform: none;
+	}
+
+	.carousel__item[aria-current='true'] .carousel__btn:hover .carousel__zoom {
+		background: var(--c-accent);
 	}
 
 	.carousel__btn:focus-visible {
@@ -163,6 +222,11 @@ import Media from './Media.astro';
 
 		.carousel__track {
 			scroll-behavior: auto;
+		}
+
+		.carousel__zoom {
+			transition: none;
+			transform: none;
 		}
 	}
 
@@ -331,7 +395,16 @@ import Media from './Media.astro';
 
 		const sync = () => {
 			items.forEach((item, i) => {
-				item.setAttribute('aria-current', i === index ? 'true' : 'false');
+				const active = i === index;
+				item.setAttribute('aria-current', active ? 'true' : 'false');
+
+				/* The label has to track what the click will actually do, since
+				   only the expanded shot opens the lightbox. */
+				const button = item.querySelector<HTMLElement>('[data-carousel-go]');
+				if (button) {
+					const alt = button.dataset.alt ?? 'photo';
+					button.setAttribute('aria-label', active ? `View ${alt} full size` : `Show ${alt}`);
+				}
 			});
 
 			prev.disabled = index === 0;
@@ -378,10 +451,26 @@ import Media from './Media.astro';
 		prev.addEventListener('click', () => goTo(index - 1, prev));
 		next.addEventListener('click', () => goTo(index + 1, next));
 
-		/* Clicking a collapsed shot promotes it to the expanded slot. */
-		items.forEach((item, i) => {
-			item.querySelector('[data-carousel-go]')?.addEventListener('click', () => goTo(i));
-		});
+		/* Every shot carries a [data-lb-open] trigger, and the lightbox binds its
+		   own click listener to each one. Clicking a collapsed shot should only
+		   promote it to the expanded slot, so that click is caught here on the
+		   way down and stopped before it ever reaches the button — leaving the
+		   expanded shot as the only one that still opens the lightbox. */
+		track.addEventListener(
+			'click',
+			(event) => {
+				const button = (event.target as Element).closest<HTMLElement>('[data-carousel-go]');
+				if (!button) return;
+
+				const target = Number(button.dataset.carouselGo);
+				if (target === index) return;
+
+				event.preventDefault();
+				event.stopPropagation();
+				goTo(target);
+			},
+			true
+		);
 
 		/* One transition per item fires; react to the active one only. */
 		track.addEventListener('transitionend', (event) => {
