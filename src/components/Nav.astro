@@ -38,8 +38,8 @@ import { navItems } from '../data/content';
 <aside id="nav-drawer" class="nav__drawer" data-nav-drawer>
 	<ul class="nav__drawer-list">
 		{
-			navItems.map((item) => (
-				<li>
+			navItems.map((item, i) => (
+				<li style={`--i:${i}`}>
 					<a class="nav__drawer-link" href={item.href} data-nav-link data-target={item.href.slice(1)}>
 						<span class="nav__drawer-index">{item.index}</span>
 						<span class="nav__drawer-label">{item.label}</span>
@@ -244,13 +244,14 @@ import { navItems } from '../data/content';
 	/* ------------------------------------------------------------------ */
 
 	/* Plain dim, deliberately no backdrop-filter — a full-viewport blur here
-	   would re-run on every hero repaint underneath it. */
+	   would re-run on every hero repaint underneath it. Tinted the same blue
+	   as the panel so the uncovered half reads as part of the same surface. */
 	.nav__scrim {
 		position: fixed;
 		inset: 0;
 		z-index: 98;
 		display: none;
-		background: rgba(0, 0, 0, 0.62);
+		background: rgba(4, 8, 16, 0.6);
 		opacity: 0;
 		pointer-events: none;
 		transition: opacity var(--dur) var(--ease-out);
@@ -266,14 +267,18 @@ import { navItems } from '../data/content';
 		inset: 0 0 0 auto;
 		z-index: 99;
 		display: none;
-		width: clamp(240px, 60vw, 360px);
+		/* Half the viewport, with a floor for sub-340px devices where 50vw
+		   would not hold a wrapped label. */
+		width: 50vw;
+		min-width: 170px;
 		/* Clears the burger, which stays on top and doubles as the close button. */
 		padding: 92px 0 32px;
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		background: rgba(10, 10, 10, 0.94);
-		border-left: 1px solid rgba(255, 255, 255, 0.12);
-		box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
+		/* Subtle dark blue — a tint away from the site's black, not a hue shift. */
+		background: linear-gradient(180deg, rgba(14, 22, 40, 0.96), rgba(9, 14, 26, 0.97));
+		border-left: 1px solid rgba(126, 158, 216, 0.18);
+		box-shadow: -20px 0 60px rgba(2, 6, 16, 0.55);
 		transform: translate3d(100%, 0, 0);
 		visibility: hidden;
 		/* Visibility is held until the slide-out has finished. */
@@ -295,13 +300,29 @@ import { navItems } from '../data/content';
 		flex-direction: column;
 	}
 
+	/* Each row settles in behind the panel, one after the next. */
+	.nav__drawer-list li {
+		opacity: 0;
+		transform: translate3d(14px, 0, 0);
+		transition:
+			opacity var(--dur-fast) ease,
+			transform var(--dur-fast) var(--ease-out);
+	}
+
+	.nav__drawer.is-open .nav__drawer-list li {
+		opacity: 1;
+		transform: none;
+		transition-delay: calc(140ms + var(--i) * 45ms);
+	}
+
+	/* Index stacks above the label: at half width the long items
+	   ("Skills & Technologies") need the full column for wrapping. */
 	.nav__drawer-link {
 		display: flex;
-		align-items: baseline;
-		gap: 12px;
-		padding: 16px 24px 16px 22px;
+		flex-direction: column;
+		gap: 5px;
+		padding: 14px 18px 14px 20px;
 		border-left: 2px solid transparent;
-		font-size: 1.0625rem;
 		font-weight: 500;
 		letter-spacing: -0.01em;
 		line-height: 1.25;
@@ -315,19 +336,24 @@ import { navItems } from '../data/content';
 	.nav__drawer-link.is-active {
 		color: #ffffff;
 		border-left-color: var(--c-accent);
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(126, 158, 216, 0.09);
 	}
 
 	.nav__drawer-index {
-		flex: none;
 		font-size: 0.6875rem;
 		font-variant-numeric: tabular-nums;
-		color: rgba(255, 255, 255, 0.3);
+		letter-spacing: 0.08em;
+		color: rgba(160, 186, 232, 0.42);
 		transition: color var(--dur-fast) ease;
 	}
 
 	.nav__drawer-link.is-active .nav__drawer-index {
 		color: var(--c-accent);
+	}
+
+	.nav__drawer-label {
+		font-size: clamp(0.9375rem, 3.4vw, 1.0625rem);
+		text-wrap: balance;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -341,10 +367,18 @@ import { navItems } from '../data/content';
 		}
 
 		/* Collapses to a circle around the burger — which also shrinks the
-		   backdrop-filter the hero repaints under to a fraction of its area. */
+		   backdrop-filter the hero repaints under to a fraction of its area.
+		   Carries the drawer's blue so the button reads as its handle. */
 		.nav__pill {
 			width: auto;
 			border-radius: 50%;
+			background: rgba(14, 22, 40, 0.5);
+			border-color: rgba(126, 158, 216, 0.22);
+		}
+
+		.nav.is-scrolled .nav__pill {
+			background: rgba(11, 18, 33, 0.86);
+			border-color: rgba(126, 158, 216, 0.18);
 		}
 
 		.nav__list,
@@ -370,6 +404,12 @@ import { navItems } from '../data/content';
 	   would keep the drawer on screen for 420ms after it closes. */
 	@media (prefers-reduced-motion: reduce) {
 		.nav__drawer {
+			transition-delay: 0s;
+		}
+
+		/* global.css only flattens durations — a staggered delay would still
+		   hold each row blank for its share of 320ms. */
+		.nav__drawer.is-open .nav__drawer-list li {
 			transition-delay: 0s;
 		}
 	}

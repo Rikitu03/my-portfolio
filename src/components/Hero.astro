@@ -8,8 +8,8 @@ import Media from './Media.astro';
 	{/* --- Cursor-tracked grain -------------------------------------------- */}
 	<div class="hero__grain" aria-hidden="true">
 		<span class="hero__grain-base"></span>
-		<span class="hero__grain-reveal"><i class="hero__grain-tile"></i></span>
-		<span class="hero__grain-flow"><i class="hero__grain-tile"></i></span>
+		<span class="hero__grain-reveal"></span>
+		<span class="hero__grain-flow"></span>
 		<span class="hero__grain-glow"></span>
 	</div>
 
@@ -23,7 +23,6 @@ import Media from './Media.astro';
 						<span class:list={['tw__line', `tw__line--${line.size}`]} style={`--i:${i}`} aria-hidden="true">
 							<span class="tw__text">{line.text}</span>
 							<span class="tw__block" />
-							<span class="tw__caret"><i class="tw__caret-bar" /></span>
 						</span>
 					))
 				}
@@ -162,52 +161,41 @@ import Media from './Media.astro';
 			rgba(0, 0, 0, 0.07) 76%,
 			transparent 100%
 		);
-		-webkit-mask-repeat: no-repeat;
-		mask-repeat: no-repeat;
+		/* The mask centre moves every frame, so the layer is promoted once and
+		   kept — re-promoting per frame is what the hint exists to avoid. */
+		will-change: mask-position;
 	}
 
-	/* Two tiles drifting on different vectors and periods. The masked wrapper
-	   stays put; the tile inside is one full tile larger in every direction
-	   and travels by exactly one tile, so the loop is seamless — and because
-	   the drift is a transform rather than a background-position, it runs on
-	   the compositor instead of repainting a full-viewport layer forever. */
+	/* Two tiles drifting on different vectors and periods. Each translation is
+	   exactly one tile, so the loop is seamless. The drift stays on
+	   `background-position` on the wrapper itself: moving it to a transformed
+	   child means the child becomes a permanently promoted layer a full tile
+	   larger than the viewport in every direction, and the masked parent then
+	   has to be composited as its own render surface every frame the mask
+	   centre moves. That costs far more than it saves. */
 	.hero__grain-reveal {
-		opacity: 0.32;
-	}
-
-	.hero__grain-flow {
-		opacity: 0.22;
-	}
-
-	.hero__grain-tile {
-		position: absolute;
-		display: block;
-		will-change: transform;
-	}
-
-	.hero__grain-reveal .hero__grain-tile {
-		inset: -200px;
 		background-image: var(--noise);
 		background-size: 200px 200px;
+		opacity: 0.32;
 		animation: grain-drift 34s linear infinite;
 	}
 
-	.hero__grain-flow .hero__grain-tile {
-		inset: -160px;
+	.hero__grain-flow {
 		background-image: var(--noise-fine);
 		background-size: 160px 160px;
+		opacity: 0.22;
 		animation: grain-drift-alt 23s linear infinite;
 	}
 
 	@keyframes grain-drift {
 		to {
-			transform: translate3d(200px, -200px, 0);
+			background-position: 200px -200px;
 		}
 	}
 
 	@keyframes grain-drift-alt {
 		to {
-			transform: translate3d(-160px, -160px, 0);
+			background-position: -160px -160px;
 		}
 	}
 
@@ -284,7 +272,7 @@ import Media from './Media.astro';
 		animation-delay: calc(var(--i) * 780ms + 400ms);
 	}
 
-	/* Grows from the caret to full width, then peels off to the right,
+	/* Grows from the line start to full width, then peels off to the right,
 	   uncovering the text underneath — the Figma variant sequence. */
 	.tw__block {
 		position: absolute;
@@ -294,34 +282,6 @@ import Media from './Media.astro';
 		transform-origin: left center;
 		animation: tw-block 900ms var(--ease-in-out) forwards;
 		animation-delay: calc(var(--i) * 780ms + 400ms);
-	}
-
-	/* Two elements so the two jobs never fight over `opacity`: the wrapper
-	   controls when the caret exists, the bar inside does the blinking. */
-	.tw__caret {
-		position: absolute;
-		right: -12px;
-		top: 12%;
-		bottom: 14%;
-		width: 4px;
-		opacity: 0;
-		/* Intermediate lines: caret appears, then leaves as the line finishes. */
-		animation: tw-caret-life 1180ms linear forwards;
-		animation-delay: calc(var(--i) * 780ms + 260ms);
-	}
-
-	/* The final caret arrives and stays. */
-	.tw__line:last-child .tw__caret {
-		animation: tw-caret-in 1ms linear forwards;
-		animation-delay: calc(var(--i) * 780ms + 260ms);
-	}
-
-	.tw__caret-bar {
-		display: block;
-		width: 100%;
-		height: 100%;
-		background: var(--c-accent);
-		animation: tw-blink 900ms steps(2, start) infinite;
 	}
 
 	/* Held fully clipped while the block sweeps out, then unclipped in step
@@ -352,34 +312,6 @@ import Media from './Media.astro';
 		100% {
 			transform: scaleX(0);
 			transform-origin: right center;
-		}
-	}
-
-	@keyframes tw-caret-in {
-		to {
-			opacity: 1;
-		}
-	}
-
-	@keyframes tw-caret-life {
-		0% {
-			opacity: 1;
-		}
-		92% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-		}
-	}
-
-	@keyframes tw-blink {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.15;
 		}
 	}
 
@@ -695,6 +627,23 @@ import Media from './Media.astro';
 		}
 	}
 
+	/* No cursor to track. The reveal and flow layers exist only to follow a
+	   pointer, so on touch they are two full-viewport masked layers being
+	   repainted for nobody — the single heaviest thing in the hero on a phone.
+	   Frozen unmasked at low opacity, they still read as grain; the script
+	   below bails on the same query so --mx/--my never move and the glow
+	   settles at its declared default. */
+	@media (hover: none) {
+		.hero__grain-reveal,
+		.hero__grain-flow {
+			-webkit-mask-image: none;
+			mask-image: none;
+			animation: none;
+			will-change: auto;
+			opacity: 0.05;
+		}
+	}
+
 	/* Motion-safe fallbacks: show everything, drop the loops. */
 	@media (prefers-reduced-motion: reduce) {
 		.tw__text {
@@ -709,7 +658,6 @@ import Media from './Media.astro';
 		}
 
 		.tw__block,
-		.tw__caret,
 		.hero__scroll-dot {
 			display: none;
 		}
@@ -723,12 +671,9 @@ import Media from './Media.astro';
 		.hero__grain-glow {
 			-webkit-mask-image: none;
 			mask-image: none;
-			opacity: 0.05;
-		}
-
-		.hero__grain-tile {
 			animation: none;
 			will-change: auto;
+			opacity: 0.05;
 		}
 	}
 </style>
@@ -737,14 +682,21 @@ import Media from './Media.astro';
 	const hero = document.querySelector<HTMLElement>('[data-hero]');
 	const pogs = Array.from(document.querySelectorAll<HTMLElement>('[data-pog-depth]'));
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+	/* The whole effect is a cursor trail, so on a touch device it animates
+	   full-viewport layers toward a pointer that will never arrive. The
+	   `(hover: none)` block in the stylesheet freezes the layers to match. */
+	const coarse = window.matchMedia('(hover: none)');
 
-	if (hero && !reduced.matches) {
+	if (hero && !reduced.matches && !coarse.matches) {
 		/* Target = where the pointer is. Current = where the blob is drawn.
 		   Easing current toward target every frame makes the grain trail the
 		   cursor instead of snapping to it. */
 		let box = hero.getBoundingClientRect();
 		let target = { x: box.width * 0.5, y: box.height * 0.45 };
 		let current = { ...target };
+		/* Kept in viewport coordinates and converted to hero-local inside the
+		   frame, so the pointer handler never has to touch layout itself. */
+		let pointer = { x: 0, y: 0 };
 		let pointerSeen = false;
 		let visible = false;
 		let raf = 0;
@@ -757,21 +709,29 @@ import Media from './Media.astro';
 		let lastY = NaN;
 		const lastPog = pogs.map(() => ({ x: NaN, y: NaN }));
 
-		/* Cached: reading the box inside the frame — after the style writes
-		   below — forces a synchronous layout on every single frame. */
-		const measure = () => {
-			box = hero.getBoundingClientRect();
+		/* Reading the box from a scroll handler forces a synchronous layout,
+		   and by then the --mx/--my writes below have already dirtied style
+		   for the whole hero subtree. So scrolling only raises a flag; the
+		   read happens at the top of the next frame, while layout is clean. */
+		let stale = true;
+		const markStale = () => {
+			stale = true;
 		};
 
-		/* Before the first pointer move (and on touch) the blob drifts on a
-		   slow lissajous path — the ambient loop from the Figma prototype. */
+		/* Before the first pointer move the blob drifts on a slow lissajous
+		   path — the ambient loop from the Figma prototype. */
 		const idlePath = (t: number) => ({
 			x: box.width * (0.5 + 0.26 * Math.sin(t * 0.00042)),
 			y: box.height * (0.46 + 0.2 * Math.sin(t * 0.00061 + 1.1)),
 		});
 
 		const tick = (now: number) => {
-			if (!pointerSeen) target = idlePath(now);
+			if (stale) {
+				box = hero.getBoundingClientRect();
+				stale = false;
+			}
+
+			target = pointerSeen ? { x: pointer.x - box.left, y: pointer.y - box.top } : idlePath(now);
 
 			/* Low gain: the field lags well behind the pointer so it reads as
 			   drifting toward the cursor rather than stuck to it. */
@@ -826,7 +786,7 @@ import Media from './Media.astro';
 
 		const onPointerMove = (event: PointerEvent) => {
 			pointerSeen = true;
-			target = { x: event.clientX - box.left, y: event.clientY - box.top };
+			pointer = { x: event.clientX, y: event.clientY };
 			/* Expand the reveal slightly while the pointer is inside. */
 			hero.style.setProperty('--r', '360px');
 			start();
@@ -842,15 +802,15 @@ import Media from './Media.astro';
 		hero.addEventListener('pointerleave', onPointerLeave, { passive: true });
 
 		/* box.top travels with the page, box.width/height with the viewport. */
-		window.addEventListener('scroll', measure, { passive: true });
-		window.addEventListener('resize', measure, { passive: true });
+		window.addEventListener('scroll', markStale, { passive: true });
+		window.addEventListener('resize', markStale, { passive: true });
 
 		/* Pause the loop when the hero is off-screen. */
 		const io = new IntersectionObserver(
 			([entry]) => {
 				visible = entry.isIntersecting;
 				if (visible) {
-					measure();
+					markStale();
 					start();
 				} else if (raf) {
 					cancelAnimationFrame(raf);

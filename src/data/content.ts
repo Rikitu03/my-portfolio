@@ -187,7 +187,7 @@ export const projectsToc = {
 		{ index: '02', label: 'OPTIQ', muted: '' },
 		{ index: '03', label: 'BayanLink', muted: '' },
 		{ index: '04', label: 'Automated Document Validation System', muted: '' },
-		{ index: '05', label: 'PLP: Entrance & Exit Kiosk', muted: '(Coming Soon)' },
+		{ index: '05', label: 'PLP: Entrance & Exit Kiosk', muted: '(local only)' },
 		{ index: '06', label: 'Coming Soon', muted: '', dim: true },
 	],
 };
