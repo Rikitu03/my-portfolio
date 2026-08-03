@@ -62,7 +62,3 @@ Two things worth knowing:
   the flat-numbered convention.
 
 Covers render at roughly 592 × 300, thumbnails at 153 × 87 — both cropped to fill.
-
-## Resume
-
-`/resume.pdf` — linked from the hero and the footer. Not present yet.

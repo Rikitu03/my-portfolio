@@ -16,6 +16,7 @@ export const navItems: NavItem[] = [
 	{ label: 'Skills & Technologies', href: '#skills', index: '03' },
 	{ label: 'Projects', href: '#projects', index: '04' },
 	{ label: 'Education & Experience', href: '#education', index: '05' },
+	{ label: 'Contact', href: '#contact', index: '06' },
 ];
 
 export const hero = {
@@ -30,7 +31,6 @@ export const hero = {
 	links: [
 		{ label: 'GitHub', href: 'https://github.com/Rikitu03/', icon: 'github' as const },
 		{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/jason-jay-recto/', icon: 'linkedin' as const },
-		{ label: 'Resume', href: '/resume.pdf', icon: 'resume' as const },
 	],
 	actions: [
 		{ label: 'Hire me', href: '#contact', variant: 'solid' as const, arrow: 'up-right' as const },
@@ -204,12 +204,35 @@ export const education = {
 	],
 };
 
+export const contact = {
+	heading: 'Contact Me',
+	intro: "Let's talk about your project and build something great! Send me a message through email or Facebook messenger.",
+	email: {
+		heading: 'Email',
+		/* Submit builds a Gmail web-compose deep link addressed here — no
+		   backend needed, and it opens the visitor's own Gmail tab instead of
+		   relying on whatever the OS has registered as the default mail app. */
+		to: 'jasonjayrecto@gmail.com',
+	},
+	/* Each renders as its own "Visit" card next to the email form. */
+	socials: [
+		{
+			heading: 'Facebook',
+			body: 'Send me a message on messenger',
+			/* TODO: replace with the real Facebook profile/page URL. */
+			href: 'https://www.facebook.com/JRiktu.03/',
+		},
+		{ heading: 'GitHub', body: 'Browse my repositories', href: 'https://github.com/Rikitu03/' },
+		{ heading: 'LinkedIn', body: "Let's connect professionally", href: 'https://www.linkedin.com/in/jason-jay-recto/' },
+	],
+};
+
 export const footer = {
 	wordmark: 'Recto',
 	links: [
 		{ label: 'GitHub', href: 'https://github.com/Rikitu03/' },
 		{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/jason-jay-recto/' },
-		{ label: 'Resume', href: '/resume.pdf' },
+		{ label: 'Facebook', href: 'https://facebook.com/' },
 	],
 	legal: 'This website is created as my personal portfolio.',
 	rights: 'All Rights Reserved',

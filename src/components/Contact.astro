@@ -1,0 +1,187 @@
+---
+import { contact } from '../data/content';
+import Icon from './Icon.astro';
+
+const socialIcon = { Facebook: 'facebook', GitHub: 'github', LinkedIn: 'linkedin' } as const;
+---
+
+<section class="section section--light contact" id="contact">
+	<div class="container split">
+		<h2 class="h-display" data-reveal="left">{contact.heading}</h2>
+		<p class="body body--muted" data-reveal>{contact.intro}</p>
+	</div>
+
+	<div class="container split contact__grid">
+		<div class="contact__col" data-reveal>
+			<h3 class="contact__label">{contact.email.heading}</h3>
+
+			<form class="contact-form" data-contact-form data-mail-to={contact.email.to}>
+				<input class="contact-form__field" type="text" name="name" placeholder="Name" autocomplete="name" required />
+				<input class="contact-form__field" type="email" name="email" placeholder="Email" autocomplete="email" required />
+				<textarea class="contact-form__field contact-form__field--area" name="message" placeholder="Message" rows="4" required
+				></textarea>
+
+				<button class="contact-btn" type="submit">
+					<span>Submit</span>
+					<Icon name="arrow-up-right" size={14} />
+				</button>
+			</form>
+		</div>
+
+		<ul class="contact__col contact__socials" data-reveal-stagger>
+			{
+				contact.socials.map((social) => (
+					<li class="contact__social">
+						<h3 class="contact__label">{social.heading}</h3>
+						<p class="fine contact__muted">{social.body}</p>
+						<a class="contact-btn" href={social.href} target="_blank" rel="noopener noreferrer">
+							<Icon name={socialIcon[social.heading as keyof typeof socialIcon]} size={14} />
+							<span>Visit</span>
+							<Icon name="arrow-up-right" size={14} />
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<style>
+	.contact__grid {
+		margin-top: 56px;
+		align-items: start;
+	}
+
+	.contact__col {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+
+	.contact__label {
+		font-size: 1.25rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.contact__muted {
+		color: var(--c-muted);
+		margin-top: -10px;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Form                                                                */
+	/* ------------------------------------------------------------------ */
+
+	.contact-form {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		max-width: 320px;
+	}
+
+	.contact-form__field {
+		width: 100%;
+		padding: 12px 16px;
+		border-radius: 10px;
+		border: 1px solid rgba(0, 0, 0, 0.16);
+		background: var(--c-white);
+		color: var(--c-ink);
+		font: inherit;
+		font-size: 0.9375rem;
+		resize: none;
+		transition: border-color var(--dur-fast) ease;
+	}
+
+	.contact-form__field::placeholder {
+		color: var(--c-muted);
+	}
+
+	.contact-form__field:focus-visible {
+		outline: none;
+		border-color: var(--c-accent);
+	}
+
+	.contact-form__field--area {
+		min-height: 96px;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Socials                                                             */
+	/* ------------------------------------------------------------------ */
+
+	.contact__socials {
+		gap: 32px;
+	}
+
+	.contact__social {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Shared button                                                       */
+	/* ------------------------------------------------------------------ */
+
+	.contact-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		width: fit-content;
+		padding: 12px 22px;
+		border-radius: 40px;
+		background: var(--c-ink);
+		color: var(--c-white);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		transition:
+			background var(--dur) ease,
+			transform var(--dur) var(--ease-spring);
+	}
+
+	.contact-btn:hover {
+		background: var(--c-accent);
+		transform: translate3d(0, -2px, 0);
+	}
+
+	.contact-btn :global(svg:last-child) {
+		transition: transform var(--dur) var(--ease-spring);
+	}
+
+	.contact-btn:hover :global(svg:last-child) {
+		transform: translate3d(3px, -3px, 0);
+	}
+
+	@media (max-width: 900px) {
+		.contact__grid {
+			margin-top: 40px;
+		}
+	}
+</style>
+
+<script>
+	document.querySelectorAll<HTMLFormElement>('[data-contact-form]').forEach((form) => {
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+
+			const to = form.dataset.mailTo ?? '';
+			const data = new FormData(form);
+			const name = String(data.get('name') ?? '').trim();
+			const email = String(data.get('email') ?? '').trim();
+			const message = String(data.get('message') ?? '').trim();
+
+			const subject = `Portfolio inquiry from ${name || 'a visitor'}`;
+			const body = `${message}\n\n— ${name}${email ? ` (${email})` : ''}`;
+
+			/* Gmail's own compose deep link, not `mailto:` — this opens the
+			   visitor's Gmail tab directly instead of depending on whatever
+			   the OS/browser has registered as the default mail handler. */
+			const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+			window.open(url, '_blank', 'noopener');
+			form.reset();
+		});
+	});
+</script>
